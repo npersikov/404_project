@@ -8,10 +8,10 @@ dropMinD = 0.0001;
 dropMaxD = 0.1;
 
 # Number of Dropplets [n]
-numDrops = 100;
+numDrops = 10;
 
 # Initial Height [m]
-h = 1;
+h = 100;
 
 # Density of dropplets [kg/m**3]
 rhoD = 1000;
@@ -31,22 +31,25 @@ cD = .04;
 # Time Step [s]
 dt = .001;
 
-# Itterations [n]
+# Iterations [n]
 I = 10000;
 
 dropDs = np.zeros(numDrops);
 dropAs = np.zeros(numDrops);
 
 massD = np.zeros(numDrops);
-forceDrag = np.zeros((I, numDrops));
-a = np.zeros((I, numDrops));
+forceDragX = np.zeros((I, numDrops));
+forceDragY = np.zeros((I, numDrops));
 
 X = np.zeros((I, numDrops));
 vX = np.zeros((I, numDrops));
 vX[0,:] = v0x;
+aX = np.zeros((I, numDrops));
 
 Y = np.zeros((I, numDrops));
+Y[0,:] = h; # set first y positions of each particle to h
 vY = np.zeros((I, numDrops));
+aY = np.zeros((I, numDrops));
 
 # Calculations
 for i in range(numDrops) :
@@ -66,21 +69,48 @@ for i in range(numDrops) :
 
 # Position Generator
 t = 0;
-for i in range(I) :
-    t = t+dt;
-    for j in range(numDrops) :
-        # Generate Y positions as particle falls
-        Y[i,j] = h-0.5*9.81*t**2;
+i = 0;
+
+for j in range(numDrops) : # For each droplet
+    i = 0; # start the position index at 0 for each droplet at the beginning
+    while Y[i,j] > 0: # propagate until it hits the ground
         
-        forceDrag[i,j] = 0.5*rhoA*cD*dropAs[j]*vX[i,j]**2;
-        a = forceDrag[i,j]/massD[j];
+        forceDragX[i,j] = -0.5*rhoA*cD*dropAs[j]*vX[i,j]**2; 
+        forceDragY[i,j] = 0.5*rhoA*cD*dropAs[j]*vY[i,j]**2; #should have different sign from x
+        
+        # NOTE drag is assumed to be negative for x and positive for y. This may not be the case. Ideally, it would depend on the velocity vector
+        aX = forceDragX[i,j]/massD[j];
+        # aY = 0.5*rhoA*cD*dropAs[j]*vY[i,j]**2/massD[j] - 9.81;
+        aY = forceDragY[i,j]/massD[j] - 9.81;
         
         if i < I-1:
-            vX[i+1,j] = vX[i,j]-a*dt;
+            # Apply drag
+            
+            vX[i+1,j] = vX[i,j]+aX*dt;
+            vY[i+1,j] = vY[i,j]+aY*dt;
         
-            # Generate X positions without drag
-            X[i+1,j] = X[i,j]+vX[i,j]*dt-0.5*a*dt**2;
-        
+            # Generate X and Y positions with drag and gravity
+            X[i+1,j] = X[i,j]+vX[i,j]*dt;
+            Y[i+1,j] = Y[i,j]+vY[i,j]*dt;
+        i += 1;            
 
-for i in range(numDrops) :
-    plt.plot(X,Y);
+    
+# Get the indeces of the steps where the droplets are at 0 height
+#index_of_negative_height, index_of_droplet = np.where(Y <= 0);
+#index_of_zero_height = index_of_negative_height[0:numDrops];
+        
+paths = plt.figure()
+plt.ylabel('Y Position (m)')
+plt.xlabel('X Position (m)')
+plt.title('Droplet Flight Paths')
+# plt.plot(X,Y);
+for drop in range(numDrops):
+    zero_heights, = np.where(Y[0:len(Y), drop] <= 0);
+    ground_hit_index = zero_heights[0];
+    plt.plot(X[0:ground_hit_index, drop],Y[0:ground_hit_index, drop]);
+
+masses = plt.figure()
+plt.ylabel('Droplet Landing Point (m)')
+plt.xlabel('Droplet Mass (kg)')
+plt.title('Droplet Flight Distance vs Droplet Mass')
+plt.scatter(massD, X[len(X)-1]);
