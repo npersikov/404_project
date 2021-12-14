@@ -3,10 +3,7 @@ import matplotlib.pyplot as plt
 
 plt.close('all') # close plots
 
-# Physical Parameters (those pertaining to droplets and forces)
-dropMinD        = 0.0001; # Dropplet Min Diamater [m]
-dropMaxD        = 0.1; # Dropplet Max Diamater [m]
-initial_D       = np.random.random()*dropMaxD + dropMinD;
+initial_D       = 0.01;
 initial_h       = 0.1; # Initial Height [m]
 rhoD            = 1000; # Density of dropplets [kg/m**3]
 rhoA            = 1.225; # Air Density [kg/m**3]
@@ -44,16 +41,6 @@ def sim(d, h, x0, rhoD, rhoA, cD, v0x, v0y, surf_tension): # Look I turned the s
     
     weber_number = 0;
     while weber_number <= 1: # propagate until it breaks up. TODO change this condition!!!
-        
-        # if the loop must continue past the initially allocated size, resize the arrays and update their length.
-        # if i >= array_size - 1:   
-        #     X.resize(len(X) + size_increment);
-        #     Y.resize(len(Y) + size_increment);
-        #     vX.resize(len(vX) + size_increment);
-        #     vY.resize(len(vY) + size_increment);
-        #     forceDragX.resize(len(forceDragX) + size_increment);
-        #     forceDragY.resize(len(forceDragY) + size_increment);
-        #     array_size += size_increment; 
     
         # Calculate drag force components
         forceDragX = np.append(forceDragX, -np.sign(vX[i])*0.5*rhoA*cD*area*vX[i]**2); 
@@ -93,16 +80,5 @@ plt.ylabel('Y Position (m)')
 plt.xlabel('X Position (m)')
 plt.title('Droplet Flight Paths')
 recursive_mission_run(d, h, x0, rhoD, rhoA, cD, v0x, v0y, surf_tension);
-
-
-
-# while h > 0:
-#     X, Y, vX, vY = sim(d, h, x0, rhoD, rhoA, cD, v0x, v0y, surf_tension);
-#     zero_heights, = np.where(Y[0:len(Y)] <= 0);
-#     ground_hit_index = zero_heights[0];
-#     plt.plot(X[0:ground_hit_index],Y[0:ground_hit_index]);
-#     d = d/2;
-#     h = Y[len(Y) - 1];
-#     v0x = 
     
 
